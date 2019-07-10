@@ -1,8 +1,10 @@
 import fetch from 'node-fetch'
 import { badRequest } from '@hapi/boom'
+import uuidv4 from 'uuid/v4'
 import moment from 'moment'
 import { database, executeSql } from '../utils'
 import { recover } from '../utils'
+import { scrap } from '../scraper'
 
 export const rollHandler = {
   get: () => {
@@ -51,6 +53,42 @@ export const rollHandler = {
     )
 
     return reply
+  },
+  add: request => {
+    const { text, response_url } = request.payload
+
+    const prms = (async () =>
+      await scrap(text.match(/^(.*?)(?=\?|$)/, '')[0]).then(value =>
+        executeSql(
+          database,
+          'INSERT INTO product ( product_id, title, price, imageUrl, productUrl, createdAt ) VALUES ( ?, ?, ?, ?, ?, ? );',
+          [
+            uuidv4(),
+            value.title,
+            value.price,
+            value.imageUrl,
+            value.productUrl,
+            moment().format(),
+          ]
+        )
+      ))()
+
+    recover(
+      prms,
+      res => {
+        rollHandler.post(
+          res === true ? 'Wish product added' : res,
+          response_url
+        )
+        return res
+      },
+      err => {
+        rollHandler.post(err, response_url)
+        return badRequest(err)
+      }
+    )
+
+    return { text: 'Adding requested product...' }
   },
   post: (text, responseUrl) => {
     const body = { text }
