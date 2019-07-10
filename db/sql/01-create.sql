@@ -4,6 +4,7 @@ CREATE TABLE product (
     price TEXT,
     imageUrl TEXT,
     productUrl TEXT,
+    author TEXT,
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     playedAt DATETIME,
     CONSTRAINT product_pk PRIMARY KEY (product_id)

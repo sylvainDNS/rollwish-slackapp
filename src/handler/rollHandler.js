@@ -11,7 +11,7 @@ export const rollHandler = {
     const reply = recover(
       executeSql(
         database,
-        'SELECT product_id, title, price, productUrl, imageUrl FROM product WHERE playedAt IS NULL ORDER BY createdAt LIMIT 1;',
+        'SELECT product_id, title, price, productUrl, imageUrl, author FROM product WHERE playedAt IS NULL ORDER BY createdAt LIMIT 1;',
         []
       ),
       res => {
@@ -28,7 +28,7 @@ export const rollHandler = {
         const body = {
           attachments: [
             {
-              pretext: '*New product rolled !!*',
+              pretext: `*New product rolled !!* (added by ${product.author})`,
               title: product.title,
               title_link: product.productUrl,
               fields: [
@@ -55,19 +55,20 @@ export const rollHandler = {
     return reply
   },
   add: request => {
-    const { text, response_url } = request.payload
+    const { text, response_url, user_name } = request.payload
 
     const prms = (async () =>
       await scrap(text.match(/^(.*?)(?=\?|$)/, '')[0]).then(value =>
         executeSql(
           database,
-          'INSERT INTO product ( product_id, title, price, imageUrl, productUrl, createdAt ) VALUES ( ?, ?, ?, ?, ?, ? );',
+          'INSERT INTO product ( product_id, title, price, imageUrl, productUrl, author, createdAt ) VALUES ( ?, ?, ?, ?, ?, ?, ? );',
           [
             uuidv4(),
             value.title,
             value.price,
             value.imageUrl,
             value.productUrl,
+            user_name,
             moment().format(),
           ]
         )
