@@ -1,3 +1,4 @@
+import fetch from 'node-fetch'
 import { badRequest } from '@hapi/boom'
 import moment from 'moment'
 import { database, executeSql } from '../utils'
@@ -50,5 +51,13 @@ export const rollHandler = {
     )
 
     return reply
+  },
+  post: (text, responseUrl) => {
+    const body = { text }
+    return fetch(responseUrl, {
+      method: 'post',
+      body: JSON.stringify(body),
+      headers: { 'Content-Type': 'application/json' },
+    })
   },
 }
