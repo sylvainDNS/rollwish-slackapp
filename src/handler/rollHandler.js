@@ -1,14 +1,13 @@
 import fetch from 'node-fetch'
-import { badRequest } from '@hapi/boom'
 import uuidv4 from 'uuid/v4'
 import moment from 'moment'
-import { database, executeSql } from '../utils'
+import { database, executeSql, config } from '../utils'
 import { recover } from '../utils'
 import { scrap } from '../scraper'
 
 export const rollHandler = {
   get: () => {
-    const reply = recover(
+    recover(
       executeSql(
         database,
         'SELECT product_id, title, price, productUrl, imageUrl, author FROM product WHERE playedAt IS NULL ORDER BY createdAt LIMIT 1;',
@@ -50,9 +49,9 @@ export const rollHandler = {
 
         return body
       }
-    )
+    ).then(body => rollHandler.post(body, config.slack.channel))
 
-    return reply
+    return { text: 'Product rolled' }
   },
   add: request => {
     const { text, response_url, user_name } = request.payload
@@ -76,26 +75,16 @@ export const rollHandler = {
 
     recover(
       prms,
-      res => {
-        rollHandler.post(
-          res === true ? 'Wish product added' : res,
-          response_url
-        )
-        return res
-      },
-      err => {
-        rollHandler.post(err, response_url)
-        return badRequest(err)
-      }
-    )
+      res => (res === true ? 'Wish product added' : res),
+      err => err
+    ).then(text => rollHandler.post({ text }, response_url))
 
     return { text: 'Adding requested product...' }
   },
   post: (text, responseUrl) => {
-    const body = { text }
     return fetch(responseUrl, {
       method: 'post',
-      body: JSON.stringify(body),
+      body: JSON.stringify(text),
       headers: { 'Content-Type': 'application/json' },
     })
   },
