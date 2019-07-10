@@ -1,6 +1,7 @@
 import { Server } from '@hapi/hapi'
 
 import { config } from './utils/config'
+import { rollRoute } from './route/rollRoute'
 
 export const start = () => {
   const server = Server({
@@ -14,4 +15,6 @@ export const start = () => {
       console.error(err)
     }
   )
+
+  rollRoute(server)
 }
