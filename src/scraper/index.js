@@ -1,0 +1,1 @@
+export { scrap } from './scraper'
